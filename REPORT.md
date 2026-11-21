@@ -1,66 +1,32 @@
-# REPORT — what the measurement showed, who it affects, and whose responsibility it is
-<!-- STUDENT: replace -->
+# REPORT: Lab 06, the harness that says no
 
-Replace this whole template with your own text. Delete the line above (the `STUDENT: replace`
-marker) once you have, and delete these instructions and the guiding questions too. Keep the three
-numbered headings. Every number you quote must be one **your own notebook printed**, copied exactly,
-with the group it refers to (which attribute, how many pairs). Which dimension each section is
-graded against is in the README.
+## Что я измерил
+Модель Qwen2.5-3B-Instruct, greedy-декодирование, 40 пар на атрибут (5 атрибутов, SEED 2026), 400 профилей, 400 вызовов. Непарсабельных ответов 0 из 400; shortlist 356 из 400 (89%).
 
-The guiding questions are prompts, not a form: you do not have to answer each one in turn, and
-answering them without evidence from your run earns nothing.
+| атрибут | флипы | доля [95% CI] | пол (флипы) | интервалы пересекаются |
+|---|---|---|---|---|
+| name_language | 2/40 | 5.0% [1.4%, 16.5%] | null_name 0/40 | да |
+| gender_coded_name | 4/40 | 10.0% [4.0%, 23.1%] | null_name 0/40 | да |
+| university | 1/40 | 2.5% [0.4%, 12.9%] | null_university 1/40 | да |
 
-## 1. Measurement read-out
+Ни один атрибут не вышел за свой пол по доле флипов. Что может обнаружить n=40: точный двусторонний тест McNemar на уровне 0.05 замечает расхождение только от 6 пар в одну сторону (15.0%) при нуле в другую, от 8 при одной встречной, от 10 при двух. Меньший эффект этим запуском от шума не отличить, а отсутствие эффекта не доказывает его отсутствия.
 
-(Dimension: Evidence of Specific Impact.)
+## Кто затронут и насколько
+- **Университет.** По решениям эффекта нет (1/40, как и на полу). По баллам есть устойчивый сдвиг в пользу флагманского вуза: +2.5 [+1.1, +4.1], sign p=0.002; доля shortlist 92.5% против 90.0%, средний балл 63.2 против 60.8. Эффект мал и редко меняет решение, но направление однородно.
+- **Пол имени.** 4 флипа, все против мужского имени (0:4, McNemar p=0.125; shortlist 90.0% у женских против 80.0% у мужских). Это ниже порога обнаружения (6 пар), поэтому не доказано, но и не исключено. Знаковый сдвиг балла -0.4 [-1.2, +0.6], sign p=0.219.
+- **Язык имени.** kazakh +0.7 [-1.8, +3.8], russian +0.2 [-1.7, +2.1], english -1.0 [-4.2, +1.9]; флипы 2 против 0 в пользу казахоязычного имени (p=0.500). Эффекта нет.
+- **Что не сбылось из предсказаний.** Непарсабельных 0, а не 5-15; казахоязычные имена не оказались в худшем положении. Пол null_name по флипам 0/40, но по баллам не ноль (7/40 пар, mean |diff| 2.00): модель реагирует на несущественные изменения баллом.
 
-Guiding questions:
+## Что сделал harness
+Включены: validate_input, blind (name, university), refuse (встроенные проверки плюс моё правило на инъекции в свободных полях), log, escalate (полоса 40-45 плюс моё правило на несоответствие решения и балла и на упоминание защищённых признаков в причине). counterfactual_check выключен.
+- После harness flip rate 0/40 по всем пяти строкам и score gap +0.0. Это следствие построения (оба члена пары видят идентичный текст), а не доказательство, что модель исправлена.
+- На уровне профилей: решение изменилось у 46 из 400; reject->escalate 22, shortlist->escalate 12, shortlist->reject 7, reject->shortlist 5. Балл изменился у 166 из 400, средний |сдвиг| 14.01. Удаление двух строк меняет и форму промпта, поэтому это не доказывает, что модель опиралась на имя или вуз.
+- К человеку ушло 34 из 400 (8.5%) при плане 16.0% (64 из 400): полоса подобрана по баллам baseline, а в harness баллы сместились. Отказов на чистых профилях 0.
+- Часть 4: harness отказал в 5 из 6 запросов (purpose_not_allowed, minor, no_consent, invalid_input, prompt_injection_suspected), все без вызова модели; bare-конвейер не отказал ни в одном. Ложных отказов среди 400 чистых профилей 0.
+- Журнал decisions.jsonl: 406 записей (400 из Part 3 и 6 из Part 4).
 
-- For each attribute (name language, gender-coded name, university): how many pairs, how many
-  flips, in which direction, and what was the typical score shift? Are these counts and magnitudes,
-  or a description of them?
-- Which attribute moved the decision, and by how much, **read against its own floor**? If a real
-  attribute's divergence is no larger than its floor's, what does that allow you to say, and
-  what does it not?
-- How much of the divergence could be noise? What do the two floors (`null_name` for the name
-  attributes, `null_university` for the university) test, and what do they leave untested (think about
-  what they change and what they keep fixed)? What would a stronger estimate require?
-- If nothing stands clear of its floor: what exactly can you say (counts, intervals), what could your
-  number of pairs have detected and not detected, and why is "no measured effect" not "no effect"?
-- Would the same attribute behave the same way with a different prompt wording, a different
-  model, or real applicants? Say what your run can and cannot support.
+## Цена
+Дополнительных вызовов модели 0 (400 против 400, 1.00 на профиль), токенов промпта 77922 против 84409, времени 466.7 с против 472.2 с. Главная цена: нагрузка на рецензентов (34 профиля на 400) и то, что 12 решений shortlist/reject изменились из-за изменения промпта.
 
-## 2. Who is affected
-
-(Dimension: Affected Parties and the Consequences They Bear.)
-
-Guiding questions:
-
-- On each side of a **wrong** decision, who is it? Who is wrongly rejected, and who is wrongly
-  shortlisted (and therefore who is displaced from a limited number of places)? Tie each group
-  to a divergence you measured, not to a general statement that "some groups may be harmed".
-- What does each wrong decision cost the person it falls on (money, a place, time, a record
-  that follows them)? Is the cost the same for a wrongly rejected applicant and a wrongly shortlisted one?
-- Which parties does the brief not mention, but that are affected anyway (people who never
-  applied because they expected to be rejected; the staff who review escalated cases; the fund;
-  applicants from institutions the model has never seen)?
-- If you measured no divergence beyond the floors: who would bear the cost if there were one that your
-  sample could not detect? Tie that to what your number of pairs could and could not see.
-- Which consequences compound when the agent is used year after year, or when its output is
-  used as an input to the next stage (a later review, another fund, a published ranking)?
-
-## 3. Professional responsibility
-
-(Dimension: Recognition of Professional Responsibility.)
-
-Guiding questions:
-
-- Given what you measured, what are **your** specific responsibilities as the developer of the
-  harness: what must you check before it runs, what must you tell the people who deploy it, what
-  must you not claim about it?
-- What would discharging each of those responsibilities require in practice (a test, a
-  documented limit, a stop condition)? What have you actually done in this lab, and what is left?
-- Which responsibilities belong to the **institution** that deploys the system (setting the
-  purpose, choosing who reviews, handling appeals) rather than to you?
-- Where do the two conflict? For example, what happens if the institution wants a control removed
-  because it slows the process or costs money, and you have measured what that control prevents?
+## За что я отвечаю
+Выбор скрытых полей (имя и вуз) и его обоснование; полоса эскалации (правило: зона, где встречаются баллы reject и shortlist, а не круглое число) и фактическая доля 8.5% против плана 16.0%; правила отказа и эскалации; проверка ложных отказов (0 из 400 чистых профилей); границы утверждений: n=40, нулевой результат не доказательство отсутствия смещения, нужно пересчитать полосу по баллам harness.

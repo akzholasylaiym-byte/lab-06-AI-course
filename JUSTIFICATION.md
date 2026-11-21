@@ -1,93 +1,22 @@
-# JUSTIFICATION — the design of the harness, and why
-<!-- STUDENT: replace -->
+# JUSTIFICATION
 
-Replace this whole template with your own text. Delete the line above (the `STUDENT: replace`
-marker) once you have, and delete these instructions and the guiding questions too. Keep the headings
-that follow. Which dimension each section is graded against is in the README.
+## Что система может делать
+Только предварительный отбор заявок на стипендию по заслугам и потребности (GPA, экзамен, достижения, доход, программа). Окончательный выбор остаётся за человеком (Закон РК № 230-VIII, ст. 17, ч. 2, п. 1: система низкой автономности). Фонд вымышленный, казахстанские законы использованы как ориентир.
 
-Two rules for the whole document:
+## Что система обязана отказывать
+Чужая цель (purpose_not_allowed), возраст младше 18 (minor), нет согласия на автоматизированную обработку (no_consent), значения вне диапазона (invalid_input), текст-инструкция в свободных полях (prompt_injection_suspected). Все отказы происходят без вызова модели. Правовая опора: Закон РК № 94-V, ст. 19-1 ч. 1, ст. 7 ч. 1 и 8.
 
-- **Every claim about a law needs a citation to the instrument and the provision** it rests on,
-  written so a reader can find the text. You identify the instruments yourself, from the primary text.
-  A chat model's statement is not a citation.
-- **Everything you describe must be in the code or in the submitted run.** A control you describe
-  but did not build, or a refusal you state but never triggered, belongs under "what the design still
-  fails to protect against".
+## Запись, которую система хранит
+decisions.jsonl: по одной строке на вызов (406 записей в этом запуске): id записи, id заявки, хэш текста, который видела модель, показанные и скрытые поля, модель и версия промпта, настройки harness, сырой ответ, решение и балл, сработавшие контроли, исход и код причины, ушло ли к человеку, время. Значения полей не пишутся. Опора: Закон РК № 230-VIII, ст. 8 (ч. 1), ст. 15 (ч. 2 п. 3), ст. 16 (ч. 1 п. 4-5).
 
-The guiding questions are prompts, not a form.
+## Принятые компромиссы
+1. Скрытие имени и вуза снимает зависимость от этих полей (балл по вузу +2.5 [+1.1, +4.1] в Part 1), но модель теряет контекст вуза, а промпт меняется: балл изменился у 166 из 400 профилей (средний сдвиг 14.01), решение у 46.
+2. Полоса эскалации (40, 45): правило выбора зона пересечения баллов reject и shortlist (максимум reject 45, минимум shortlist 45). Планировалось 16.0% (64 из 400), фактически к человеку ушло 34 из 400 (8.5%), потому что баллы в harness сместились; полосу нужно пересчитать по баллам harness.
+3. Эскалация не делает решение справедливым, а только определяет, кто смотрит.
+4. counterfactual_check не включён: он удваивает вызовы, а blind уже закрывает тот же канал.
 
-## 1. What the system may do
+## Предсказание (Part 5): какой контроль труднее всего привязать к конкретной норме
+validate_input: законы общие (ст. 11 и 18 Закона 230-VIII о безопасности и управлении рисками), нормы о проверке диапазонов нет, поэтому привязка косвенная, через управление рисками.
 
-(Dimension: Integration of Constraints into the Design.)
-
-- What is the system for, stated narrowly? What decisions may it make on its own, and which may it only
-  inform?
-- For each control you built (input validation, blinding, refusal, log, escalation): which
-  constraint made you build it, and where in the code can a reader find it?
-- Did any constraint change the architecture itself, so that the design would be different without it?
-  Name a decision you made differently because of a constraint, and what you would have done otherwise.
-
-## 2. What it must refuse
-
-(Dimension: Refusal Boundaries and Enforcement.)
-
-- What does it refuse (purposes, inputs, applicants)? Where is each refusal enforced in code, and
-  where in your submitted run did it fire?
-- For each refusal: **which legitimate case does it also block**, and who bears that cost? Is that cost
-  acceptable, and why?
-- What happens to a refused request: is it recorded, is anyone told, can the person ask for a decision to
-  be made by a human instead?
-
-## 3. What record it keeps
-
-(Dimension: Accountability Record and Auditability.)
-
-- What is the **audit question** your record is designed to answer (for example, "why did this
-  applicant get this outcome, and could someone else reconstruct it without re-running the model?")?
-  State it in one sentence, then show that a record in `decisions.jsonl` answers it.
-- What is in each record, and what is left out on purpose (for example, personal data you chose not to
-  store)? Why that line?
-- How long is the record kept, who may read it, who may change it, and what stops a record being
-  edited after the fact? What does the record not let you reconstruct?
-
-## 4. The legal constraints
-
-(Dimension: Identification and Citation of Legal Constraints.)
-
-- Which instruments apply to an automated screening decision about people, and why do they
-  apply to this system (jurisdiction, subject matter, who is the operator)? Cite the instrument and the
-  provision for each.
-- For each, what does the law **require** of the system, and what does it merely **permit** or leave
-  to you? Where did you do more than the law requires, and why?
-- Where is the text you cite stated to apply to automated decisions specifically? If you could
-  not find a provision for a control, say so rather than inventing one.
-
-## 5. The ethical principles
-
-(Dimension: Identification of Applicable Ethical Principles.)
-
-- Which principles govern an automated screening decision, and which decision in **this** system does
-  each bear on (not in general)? Cite the source in which you found each principle named, and say
-  what status that text has.
-- Where do the principles conflict with one another in your design (for example, between
-  treating applicants identically and treating applicants fairly given what you measured)? Which did
-  you put first, and why?
-- Where does ethics demand something the law does not?
-
-## 6. The trade-offs
-
-(Dimension: Trade-off Analysis and Justification.)
-
-- For each control: what does it cost (errors, speed, reviewer time, applicant privacy, extra model
-  calls), and what harm does it prevent? Use your before-and-after measurement where you can.
-- The width of your escalation band is a trade-off too: how many applicants does it send to a person, who reads
-  them, and what happens to the cases outside it that nobody re-checks? A threshold calibrated on one
-  configuration does not transfer to another: did you recalibrate it after you changed what the model
-  sees, and what share was actually escalated?
-- Why did you choose the balance you did, and what would make you choose differently?
-- What does the design **still fail to protect against**? What would closing that gap take, and why did
-  you not do it?
-
-## AI-use declaration
-
-Half a page: which AI tools you used in this assignment and for what. If you used none, say so.
+## Ограничения и оговорки
+Закон № 230-VIII я читал в версии с изменениями на 25.08.2026 (изменения Законом № 326-VIII от 24.06.2026 затрагивают, в частности, ст. 17). Ст. 17 ч. 3 п. 3 запрещает системы, оценивающие людей по личным характеристикам, кроме предусмотренных законом случаев; поэтому система оценивает только заслуги, а имя и вуз скрыты. Принципы ЮНЕСКО указаны по названиям из раздела III Рекомендации 2021 года; это добровольный документ, а не обязательный закон. Казахстанские законы использованы как ориентир для вымышленного фонда.

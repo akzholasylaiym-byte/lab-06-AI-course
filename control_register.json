@@ -1,0 +1,52 @@
+{
+  "harness_controls": [
+    "validate_input",
+    "blind",
+    "refuse",
+    "log",
+    "escalate"
+  ],
+  "format_problems": [],
+  "entries": [
+    {
+      "control": "validate_input",
+      "principle": "Safety and security",
+      "principle_source": "UNESCO Recommendation on the Ethics of Artificial Intelligence (2021), раздел III «Values and principles», принцип «Safety and security»",
+      "instrument": "Закон Республики Казахстан от 17.11.2025 № 230-VIII «Об искусственном интеллекте»",
+      "provision": "Article 11, part 1; Article 18, part 1, points 1-3",
+      "why_here": "Bare-конвейер не проверяет диапазоны и передаёт модели невозможные значения (GPA 9.9, exam -5); отклонить такие данные до модели это управление рисками по ст. 18. Фонд вымышленный, закон не обязателен для прототипа, используется как ориентир."
+    },
+    {
+      "control": "blind",
+      "principle": "Fairness and non-discrimination",
+      "principle_source": "UNESCO Recommendation on the Ethics of Artificial Intelligence (2021), раздел III «Values and principles», принцип «Fairness and non-discrimination»",
+      "instrument": "Закон Республики Казахстан от 17.11.2025 № 230-VIII «Об искусственном интеллекте»; Закон Республики Казахстан от 21.05.2013 № 94-V «О персональных данных и их защите»",
+      "provision": "230-VIII Article 6 (запрет дискриминации по языку, полу, происхождению); 94-V Article 7, part 9",
+      "why_here": "В Part 1 единственным устойчивым расхождением был балл по вузу (флагман минус региональный +2.5 [+1.1, +4.1], sign p=0.002), а по именам расхождение не вышло за пол; имя и вуз не относятся к заслугам, поэтому скрыты от модели, а избыточные для цели данные не обрабатываются. Фонд вымышленный, закон не обязателен для прототипа, используется как ориентир."
+    },
+    {
+      "control": "refuse",
+      "principle": "Right to privacy and data protection; proportionality and do no harm",
+      "principle_source": "UNESCO Recommendation on the Ethics of Artificial Intelligence (2021), раздел III «Values and principles», принцип «Right to privacy and data protection» и «Proportionality and do no harm»",
+      "instrument": "Закон Республики Казахстан от 21.05.2013 № 94-V «О персональных данных и их защите»",
+      "provision": "Article 19-1, part 1; Article 7, parts 1 and 8",
+      "why_here": "Автоматизированная обработка, затрагивающая права заявителя, требует его согласия, цель должна быть заранее заявленной, а несовершеннолетнего представляет законный представитель; bare-конвейер всё это обрабатывал (Part 4), harness отказывает без вызова модели. Фонд вымышленный, закон не обязателен для прототипа, используется как ориентир."
+    },
+    {
+      "control": "log",
+      "principle": "Transparency and explainability; responsibility and accountability",
+      "principle_source": "UNESCO Recommendation on the Ethics of Artificial Intelligence (2021), раздел III «Values and principles», принцип «Transparency and explainability» и раздел об ответственности и подотчётности (Responsibility and accountability)",
+      "instrument": "Закон Республики Казахстан от 17.11.2025 № 230-VIII «Об искусственном интеллекте»",
+      "provision": "Article 8, part 1; Article 15, part 2, point 3; Article 16, part 1, points 4-5",
+      "why_here": "Журнал хранит хэш входа, показанные и скрытые поля, модель, версию промпта и код причины, чтобы по запросу заявителя о разъяснении или при проверке через год решение можно было восстановить без повторного запуска модели; значения полей не пишутся. Фонд вымышленный, закон не обязателен для прототипа, используется как ориентир."
+    },
+    {
+      "control": "escalate",
+      "principle": "Human oversight and determination",
+      "principle_source": "UNESCO Recommendation on the Ethics of Artificial Intelligence (2021), раздел III «Values and principles», принцип «Human oversight and determination»",
+      "instrument": "Закон Республики Казахстан от 17.11.2025 № 230-VIII «Об искусственном интеллекте»; Закон Республики Казахстан от 21.05.2013 № 94-V «О персональных данных и их защите»",
+      "provision": "230-VIII Article 17, part 2, point 1 (низкая автономность: окончательный выбор делает человек); 94-V Article 19-1, parts 2-3 (возражение против автоматизированной обработки)",
+      "why_here": "Полоса (40, 45) выбрана там, где пересекаются баллы reject и shortlist (максимум reject 45, минимум shortlist 45); в Part 3 к человеку ушло 34 из 400 (8.5%) при плане 16.0%, и этот человек рассматривает возражения заявителей. Фонд вымышленный, закон не обязателен для прототипа, используется как ориентир."
+    }
+  ]
+}
